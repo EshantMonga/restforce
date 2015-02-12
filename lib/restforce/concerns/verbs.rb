@@ -44,7 +44,7 @@ module Restforce
               raise
             end
           else
-            raise Restforce::Error, '24-hour API Limit reached'
+            raise Restforce::ApiLimitError, '24-hour API Limit reached'
           end
         end
       end
