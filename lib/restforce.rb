@@ -63,15 +63,6 @@ module Restforce
     end
   end
 
-  def get_api_limits
-    return { used: @used_api_requests || 0, max: @max_api_requests || 0 }
-  end
-
-  def set_limits max, used
-    @used_api_requests = used
-    @max_api_requests = max
-  end
-
   # Add .tap method in Ruby 1.8
   module CoreExtensions
     def tap
