@@ -8,6 +8,7 @@ module Restforce
     autoload :InstanceURL,    'restforce/middleware/instance_url'
     autoload :Multipart,      'restforce/middleware/multipart'
     autoload :Mashify,        'restforce/middleware/mashify'
+    autoload :APIUsage,        'restforce/middleware/api_usage'
     autoload :Caching,        'restforce/middleware/caching'
     autoload :Logger,         'restforce/middleware/logger'
     autoload :Gzip,           'restforce/middleware/gzip'
