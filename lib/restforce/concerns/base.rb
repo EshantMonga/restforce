@@ -54,6 +54,14 @@ module Restforce
         options[:instance_url]
       end
 
+      def used_api_requests
+          options[:used_api_requests]
+      end
+
+      def max_api_requests
+          options[:max_api_requests]
+      end
+
       def inspect
         "#<#{self.class} @options=#{@options.inspect}>"
       end
