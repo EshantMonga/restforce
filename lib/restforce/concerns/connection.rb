@@ -45,6 +45,8 @@ module Restforce
           builder.use      Restforce::Middleware::Logger, Restforce.configuration.logger, options if Restforce.log?
           # Compress/Decompress the request/response
           builder.use      Restforce::Middleware::Gzip, self, options
+          # Store the api usage 
+          builder.use      Restforce::Middleware::APIUsage, self, options
 
           builder.adapter  adapter
         end

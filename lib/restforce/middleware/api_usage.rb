@@ -1,6 +1,5 @@
 module Restforce
     class Middleware::APIUsage < Restforce::Middleware
-        
         def call(env)
             @app.call(env).on_complete do |env|
                 api_usage(env[:response_headers])
