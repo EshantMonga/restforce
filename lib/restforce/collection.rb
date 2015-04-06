@@ -11,9 +11,11 @@ module Restforce
 
     # Yield each value on each page.
     def each
-      @raw_page['records'].each { |record| yield Restforce::Mash.build(record, @client) }
-
-      next_page.each { |record| yield record } if has_next_page?
+      cur_collection = self
+      while !cur_collection.nil?
+        cur_collection.raw_records.each { |record| yield Restforce::Mash.build(record, @client) }
+        cur_collection = cur_collection.next_page
+      end
     end
 
     # Return the size of the Collection without making any additional requests.
@@ -40,6 +42,10 @@ module Restforce
     # Returns the next page as a Restforce::Collection if it's available, nil otherwise.
     def next_page
       @next_page ||= @client.get(@raw_page['nextRecordsUrl']).body if has_next_page?
+    end
+
+    def raw_records
+        @raw_page['records']
     end
   end
 end
