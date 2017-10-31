@@ -10,22 +10,33 @@ module Restforce
     # Rescue from 401's, authenticate then raise the error again so the client
     # can reissue the request.
     def call(env)
-      @app.call(env)
-    rescue Restforce::UnauthorizedError
-      authenticate!
-      raise
+      if @options[:token_provider].nil?
+        begin
+          @app.call(env)
+        rescue Restforce::UnauthorizedError
+          authenticate_with_no_token_provider!
+          raise
+        end
+      else
+        num_tries = 0
+        while num_tries < 5
+          begin
+            return @app.call(env)
+          rescue Restforce::UnauthorizedError
+            authenticate_with_token_provider!
+            num_tries += 1
+          end
+        end
+      end
     end
 
     # Internal: Performs the authentication and returns the response body.
     def authenticate!
-      response = connection.post '/services/oauth2/token' do |req|
-        req.body = encode_www_form(params)
+      if @options[:token_provider].nil?
+        authenticate_with_no_token_provider!
+      else
+        authenticate_with_token_provider!
       end
-      raise Restforce::AuthenticationError, error_message(response) if response.status != 200
-      @options[:instance_url] = response.body['instance_url']
-      @options[:oauth_token]  = response.body['access_token']
-      @options[:authentication_callback].call(response.body) if @options[:authentication_callback]
-      response.body
     end
 
     # Internal: The params to post to the OAuth service.
@@ -62,7 +73,37 @@ module Restforce
       end
     end
 
-  private
+    private
+
+    def authenticate_with_no_token_provider!
+      response = connection.post '/services/oauth2/token' do |req|
+        req.body = encode_www_form(params)
+      end
+      raise Restforce::AuthenticationError, error_message(response) if response.status != 200
+      @options[:instance_url] = response.body['instance_url']
+      @options[:oauth_token]  = response.body['access_token']
+      @options[:authentication_callback].call(response.body) if @options[:authentication_callback]
+      response.body
+    end
+
+    def authenticate_with_token_provider!
+      refresh_access_token = -> {
+        response = connection.post '/services/oauth2/token' do |req|
+          req.body = encode_www_form(params)
+        end
+        raise Restforce::AuthenticationError, error_message(response) if response.status != 200
+        response.body['access_token']
+      }
+      set_access_token = ->(access_token) { @options[:oauth_token] = access_token }
+
+      token_provider = @options[:token_provider]
+      token_provider.authenticate(
+        @options[:oauth_token],
+        refresh_access_token,
+        set_access_token)
+      { 'access_token': @options[:oauth_token] }
+    end
+
     def faraday_options
       { :url   => "https://#{@options[:host]}",
         :proxy => @options[:proxy_uri] }.reject { |k, v| v.nil? }
