@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'logger'
 
 module Restforce
@@ -32,7 +34,8 @@ module Restforce
 
     def log(message)
       return unless Restforce.log?
-      Restforce.configuration.logger.send :debug, message
+
+      configuration.logger.send(configuration.log_level, message)
     end
   end
 
@@ -45,7 +48,9 @@ module Restforce
       end
 
       def initialize(configuration, name, options = {})
-        @configuration, @name, @options = configuration, name, options
+        @configuration = configuration
+        @name = name
+        @options = options
         @default = options.fetch(:default, nil)
       end
 
@@ -55,9 +60,10 @@ module Restforce
         self
       end
 
-    private
+      private
+
       attr_reader :default
-      alias_method :default_provided?, :default
+      alias default_provided? default
 
       def write_attribute
         configuration.send :attr_accessor, name
@@ -68,7 +74,10 @@ module Restforce
         our_name    = name
         configuration.send :define_method, our_name do
           instance_variable_get(:"@#{our_name}") ||
-            instance_variable_set(:"@#{our_name}", our_default.respond_to?(:call) ? our_default.call : our_default)
+            instance_variable_set(
+              :"@#{our_name}",
+              our_default.respond_to?(:call) ? our_default.call : our_default
+            )
         end
       end
     end
@@ -82,26 +91,31 @@ module Restforce
       end
     end
 
-    option :api_version, :default => '26.0'
+    option :api_version, default: lambda { ENV.fetch('SALESFORCE_API_VERSION', '26.0') }
 
     # The username to use during login.
-    option :username, :default => lambda { ENV['SALESFORCE_USERNAME'] }
+    option :username, default: lambda { ENV.fetch('SALESFORCE_USERNAME', nil) }
 
     # The password to use during login.
-    option :password, :default => lambda { ENV['SALESFORCE_PASSWORD'] }
+    option :password, default: lambda { ENV.fetch('SALESFORCE_PASSWORD', nil) }
 
     # The security token to use during login.
-    option :security_token, :default => lambda { ENV['SALESFORCE_SECURITY_TOKEN'] }
+    option :security_token, default: lambda {
+                                       ENV.fetch('SALESFORCE_SECURITY_TOKEN', nil)
+                                     }
 
     # The OAuth client id
-    option :client_id, :default => lambda { ENV['SALESFORCE_CLIENT_ID'] }
+    option :client_id, default: lambda { ENV.fetch('SALESFORCE_CLIENT_ID', nil) }
 
     # The OAuth client secret
-    option :client_secret, :default => lambda { ENV['SALESFORCE_CLIENT_SECRET'] }
+    option :client_secret, default: lambda { ENV.fetch('SALESFORCE_CLIENT_SECRET', nil) }
+
+    # The private key for JWT authentication
+    option :jwt_key
 
     # Set this to true if you're authenticating with a Sandbox instance.
     # Defaults to false.
-    option :host, :default => lambda { ENV['SALESFORCE_HOST'] || 'login.salesforce.com' }
+    option :host, default: lambda { ENV.fetch('SALESFORCE_HOST', 'login.salesforce.com') }
 
     option :oauth_token
     option :refresh_token
@@ -112,7 +126,7 @@ module Restforce
     option :cache
 
     # The number of times reauthentication should be tried before failing.
-    option :authentication_retries, :default => 3
+    option :authentication_retries, default: 3
 
     # Set to true if you want responses from Salesforce to be gzip compressed.
     option :compress
@@ -125,16 +139,27 @@ module Restforce
     option :timeout
 
     # Faraday adapter to use. Defaults to Faraday.default_adapter.
-    option :adapter, :default => lambda { Faraday.default_adapter }
+    option :adapter, default: lambda { Faraday.default_adapter }
 
-    option :proxy_uri, :default => lambda { ENV['PROXY_URI'] }
+    option :proxy_uri, default: lambda { ENV.fetch('SALESFORCE_PROXY_URI', nil) }
 
     # A Proc that is called with the response body after a successful authentication.
     option :authentication_callback
 
-    def logger
-      @logger ||= ::Logger.new STDOUT
-    end
+    # Set SSL options
+    option :ssl, default: {}
+
+    # A Hash that is converted to HTTP headers
+    option :request_headers
+
+    # Set a logger for when Restforce.log is set to true, defaulting to STDOUT
+    option :logger, default: ::Logger.new($stdout)
+
+    # Set a log level for logging when Restforce.log is set to true, defaulting to :debug
+    option :log_level, default: :debug
+
+    # Set use_cache to false to opt in to caching with client.with_caching
+    option :use_cache, default: true
 
     def options
       self.class.options

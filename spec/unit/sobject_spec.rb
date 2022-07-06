@@ -1,8 +1,14 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::SObject do
-  let(:client)      { double('Client') }
-  let(:hash)        { JSON.parse(fixture('sobject/query_success_response'))['records'].first }
+  let(:client) { double('Client') }
+
+  let(:hash) do
+    JSON.parse(fixture('sobject/query_success_response'))['records'].first
+  end
+
   subject(:sobject) { described_class.new(hash, client) }
 
   describe '#new' do
@@ -18,8 +24,8 @@ describe Restforce::SObject do
         it { should be_a Restforce::Collection }
 
         describe 'each child' do
-          it { should be_all { |sobject| expect(sobject).to be_a Restforce::SObject } }
-          it { should be_all { |sobject| expect(sobject).to have_client client } }
+          it { should(be_all { |sobject| expect(sobject).to be_a Restforce::SObject }) }
+          it { should(be_all { |sobject| expect(sobject).to have_client client }) }
         end
       end
 
@@ -34,20 +40,20 @@ describe Restforce::SObject do
     end
   end
 
-  { :save     => :update,
-    :save!    => :update!,
-    :destroy  => :destroy,
-    :destroy! => :destroy! }.each do |method, receiver|
+  { save: :update,
+    save!: :update!,
+    destroy: :destroy,
+    destroy!: :destroy! }.each do |method, receiver|
     describe ".#{method}" do
-      subject { lambda { sobject.send(method) } }
+      subject(:send_method) { lambda { sobject.send(method) } }
 
       context 'when an Id was not queried' do
-        it { should raise_error ArgumentError, 'You need to query the Id for the record first.' }
+        it { should raise_error ArgumentError, /need to query the Id for the record/ }
       end
 
       context 'when an Id is present' do
         before do
-          hash.merge!(:Id => '001D000000INjVe')
+          hash[:Id] = '001D000000INjVe'
           client.should_receive(receiver)
         end
 

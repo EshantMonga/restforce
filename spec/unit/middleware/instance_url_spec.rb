@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::Middleware::InstanceURL do
@@ -6,7 +8,7 @@ describe Restforce::Middleware::InstanceURL do
 
     context 'when the instance url is not set' do
       before do
-        client.stub_chain :connection, :url_prefix => URI.parse('http:/')
+        client.stub_chain :connection, url_prefix: URI.parse('http:/')
       end
 
       it { should raise_error Restforce::UnauthorizedError }
@@ -14,7 +16,7 @@ describe Restforce::Middleware::InstanceURL do
 
     context 'when the instance url is set' do
       before do
-        client.stub_chain :connection, :url_prefix => URI.parse('http://foobar.com/')
+        client.stub_chain :connection, url_prefix: URI.parse('http://foobar.com/')
         app.should_receive(:call).once
       end
 

@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Faraday
   module Parts
-
     module Part
       def self.new(boundary, name, value, headers = {})
         headers ||= {}
@@ -21,8 +22,8 @@ module Faraday
       def build_part(boundary, name, value, headers = {})
         part = ''
         part << "--#{boundary}\r\n"
-        part << "Content-Disposition: form-data; name=\"#{name.to_s}\"\r\n"
-        part << "Content-Type: #{headers["Content-Type"]}\r\n" if headers["Content-Type"]
+        part << "Content-Disposition: form-data; name=\"#{name}\"\r\n"
+        part << "Content-Type: #{headers['Content-Type']}\r\n" if headers["Content-Type"]
         part << "\r\n"
         part << "#{value}\r\n"
       end

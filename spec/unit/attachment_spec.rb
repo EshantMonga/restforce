@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::Attachment do
@@ -8,7 +10,8 @@ describe Restforce::Attachment do
 
   describe '.Body' do
     it 'requests the body' do
-      client.should_receive(:get).with(body_url).and_return(double('response').as_null_object)
+      client.should_receive(:get).with(body_url).
+        and_return(double('response').as_null_object)
       sobject.Body
     end
   end

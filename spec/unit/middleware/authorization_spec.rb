@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::Middleware::Authorization do
-  let(:options) { { :oauth_token => 'token' } }
+  let(:options) { { oauth_token: 'token' } }
 
   describe '.call' do
     subject { lambda { middleware.call(env) } }

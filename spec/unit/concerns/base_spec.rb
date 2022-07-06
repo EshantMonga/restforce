@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::Concerns::Base do
@@ -41,7 +43,7 @@ describe Restforce::Concerns::Base do
 
     context 'when options[:instance_url] is set' do
       before do
-        client.stub :options => { :instance_url => 'foo' }
+        client.stub options: { instance_url: 'foo' }
       end
 
       it { should eq 'foo' }

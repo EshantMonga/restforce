@@ -1,10 +1,14 @@
+# frozen_string_literal: true
+
 module Restforce
   module Concerns
     module Authentication
-
       # Public: Force an authentication
       def authenticate!
-        raise AuthenticationError, 'No authentication middleware present' unless authentication_middleware
+        unless authentication_middleware
+          raise AuthenticationError, 'No authentication middleware present'
+        end
+
         middleware = authentication_middleware.new nil, self, options
         middleware.authenticate!
       end
@@ -15,6 +19,8 @@ module Restforce
           Restforce::Middleware::Authentication::Password
         elsif oauth_refresh?
           Restforce::Middleware::Authentication::Token
+        elsif jwt?
+          Restforce::Middleware::Authentication::JWTBearer
         end
       end
 
@@ -35,6 +41,13 @@ module Restforce
           options[:client_secret]
       end
 
+      # Internal: Returns true if jwt bearer token flow should be used for
+      # authentication.
+      def jwt?
+        options[:jwt_key] &&
+          options[:username] &&
+          options[:client_id]
+      end
     end
   end
 end

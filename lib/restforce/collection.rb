@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Restforce
   class Collection
     include Enumerable
@@ -10,7 +12,7 @@ module Restforce
     end
 
     # Yield each value on each page.
-    def each
+    def each(&block)
       cur_collection = self
       while !cur_collection.nil?
         cur_collection.raw_records.each { |record| yield Restforce::Mash.build(record, @client) }
@@ -18,11 +20,39 @@ module Restforce
       end
     end
 
-    # Return the size of the Collection without making any additional requests.
-    def size
-      @raw_page['totalSize']
+    # Return the size of each page in the collection
+    def page_size
+      @raw_page['records'].size
     end
-    alias_method :length, :size
+
+    # Return the number of items in the Collection without making any additional
+    # requests and going through all of the pages of results, one by one. Instead,
+    # we can rely on the total count of results which Salesforce returns.
+    #
+    # Most of the Salesforce API returns this in the `totalSize` attribute. For
+    # some reason, the [List View Results](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm)
+    # endpoint (and maybe others?!) uses the `size` attribute.
+    def size
+      @raw_page['totalSize'] || @raw_page['size']
+    end
+    alias length size
+
+    def count(*args)
+      # By default, `Enumerable`'s `#count` uses `#each`, which means going through all
+      # of the pages of results, one by one. Instead, we can use `#size` which we have
+      # already overridden to work in a smarter, more efficient way. This only works for
+      # the simple version of `#count` with no arguments. When called with an argument or
+      # a block, you need to know what the items in the collection actually are, so we
+      # call `super` and end up iterating through each item in the collection.
+      return size unless block_given? || !args.empty?
+
+      super
+    end
+
+    # Returns true if the size of the Collection is zero.
+    def empty?
+      size.zero?
+    end
 
     # Return array of the elements on the current page
     def current_page
@@ -41,7 +71,7 @@ module Restforce
 
     # Returns the next page as a Restforce::Collection if it's available, nil otherwise.
     def next_page
-      @next_page ||= @client.get(@raw_page['nextRecordsUrl']).body if has_next_page?
+      @client.get(@raw_page['nextRecordsUrl']).body if has_next_page?
     end
 
     def raw_records

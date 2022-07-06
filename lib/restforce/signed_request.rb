@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'openssl'
 require 'base64'
 require 'json'
@@ -25,10 +27,12 @@ module Restforce
     # Returns nil if the signed request is invalid.
     def decode
       return nil if signature != hmac
+
       JSON.parse(Base64.decode64(payload))
     end
 
-  private
+    private
+
     attr_reader :client_secret, :signature, :payload
 
     def split_components(signed_request)
@@ -51,6 +55,5 @@ module Restforce
         OpenSSL::Digest
       end
     end
-
   end
 end

@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Restforce
   class SObject < Restforce::Mash
-
     def sobject_type
       self.attributes['type']
     end
@@ -58,12 +59,12 @@ module Restforce
       self.Id
     end
 
-  private
+    private
 
     def ensure_id
       return true if self.Id?
+
       raise ArgumentError, 'You need to query the Id for the record first.'
     end
-
   end
 end

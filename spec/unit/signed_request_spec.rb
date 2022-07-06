@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Restforce::SignedRequest do
   let(:client_secret) { 'foo' }
   let(:digest) do
     if RUBY_VERSION < '2.1'
-      OpenSSL::Digest::Digest.new('sha256')
+      OpenSSL::Digest.new('Digest', 'sha256')
     else
       OpenSSL::Digest.new('sha256')
     end
